@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تطبيق حسابات العملاء</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .menu button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .menu button:hover {
+            background-color: #0056b3;
+        }
+        .form-container, .list-container {
+            display: none;
+            margin-top: 20px;
+        }
+        .form-container input, .form-container button {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 16px;
+        }
+        .list-container table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .list-container th, .list-container td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        .list-container th {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>تطبيق حسابات العملاء</h1>
+    <div class="container">
+        <div class="menu">
+            <button onclick="showForm('addCustomer')">إضافة عميل جديد</button>
+            <button onclick="showForm('addTransaction')">إضافة معاملة مالية</button>
+            <button onclick="viewCustomers()">عرض قائمة العملاء</button>
+        </div>
+
+        <div id="addCustomer" class="form-container">
+            <h2>إضافة عميل جديد</h2>
+            <input type="text" id="customerId" placeholder="رقم العميل">
+            <input type="text" id="customerName" placeholder="اسم العميل">
+            <input type="text" id="customerPhone" placeholder="رقم الهاتف">
+            <input type="number" id="customerBalance" placeholder="الرصيد الافتتاحي">
+            <button onclick="addCustomer()">إضافة العميل</button>
+        </div>
+
+        <div id="addTransaction" class="form-container">
+            <h2>إضافة معاملة مالية</h2>
+            <input type="text" id="transactionCustomerId" placeholder="رقم العميل">
+            <input type="number" id="transactionAmount" placeholder="المبلغ (إضافة + / خصم -)">
+            <button onclick="addTransaction()">تحديث الرصيد</button>
+        </div>
+
+        <div id="customerList" class="list-container">
+            <h2>قائمة العملاء</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>رقم العميل</th>
+                        <th>اسم العميل</th>
+                        <th>رقم الهاتف</th>
+                        <th>الرصيد الحالي</th>
+                    </tr>
+                </thead>
+                <tbody id="customerTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const customers = {};
+
+        function showForm(formId) {
+            document.querySelectorAll('.form-container').forEach(form => form.style.display = 'none');
+            document.getElementById(formId).style.display = 'block';
+            document.getElementById('customerList').style.display = 'none';
+        }
+
+        function addCustomer() {
+            const customerId = document.getElementById('customerId').value;
+            if (customers[customerId]) {
+                alert('رقم العميل موجود بالفعل!');
+                return;
+            }
+
+            const name = document.getElementById('customerName').value;
+            const phone = document.getElementById('customerPhone').value;
+            const balance = parseFloat(document.getElementById('customerBalance').value);
+
+            if (!name || !phone || isNaN(balance)) {
+                alert('يرجى إدخال بيانات صحيحة!');
+                return;
+            }
+
+            customers[customerId] = {
+                name: name,
+                phone: phone,
+                balance: balance
+            };
+
+            alert(`تمت إضافة العميل ${name} بنجاح!`);
+            clearForm('addCustomer');
+        }
+
+        function addTransaction() {
+            const customerId = document.getElementById('transactionCustomerId').value;
+            if (!customers[customerId]) {
+                alert('رقم العميل غير موجود!');
+                return;
+            }
+
+            const amount = parseFloat(document.getElementById('transactionAmount').value);
+            if (isNaN(amount)) {
+                alert('يرجى إدخال مبلغ صحيح!');
+                return;
+            }
+
+            customers[customerId].balance += amount;
+            alert(`تم تحديث الرصيد. الرصيد الحالي: ${customers[customerId].balance}`);
+            clearForm('addTransaction');
+        }
+
+        function viewCustomers() {
+            const tableBody = document.getElementById('customerTableBody');
+            tableBody.innerHTML = '';
+
+            if (Object.keys(customers).length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4">لا يوجد عملاء مسجلين!</td></tr>';
+                return;
+            }
+
+            for (const [id, info] of Object.entries(customers)) {
+                const row = `<tr>
+                                <td>${id}</td>
+                                <td>${info.name}</td>
+                                <td>${info.phone}</td>
+                                <td>${info.balance}</td>
+                             </tr>`;
+                tableBody.innerHTML += row;
+            }
+
+            document.querySelectorAll('.form-container').forEach(form => form.style.display = 'none');
+            document.getElementById('customerList').style.display = 'block';
+        }
+
+        function clearForm(formId) {
+            document.getElementById(formId).querySelectorAll('input').forEach(input => input.value = '');
+        }
+    </script>
+</body>
+</html>
